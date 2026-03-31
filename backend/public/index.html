@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intrusion Detection Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <div class="header-content">
+                <div class="header-title">
+                    <div class="pulse-indicator"></div>
+                    <h1>Edge Intrusion Analytics</h1>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-card">
+                        <span class="stat-label">System Status</span>
+                        <span class="stat-value text-green">Online</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Total Events</span>
+                        <span class="stat-value" id="total-events">0</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Recent Detections</h2>
+                    <span class="live-badge">LIVE</span>
+                </div>
+                
+                <div id="alerts-container" class="alerts-grid">
+                    <!-- Alerts will be appended here dynamically -->
+                    <div class="empty-state" id="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <path d="M12 8v4"></path>
+                            <path d="M12 16h.01"></path>
+                        </svg>
+                        <p>No intrusions detected yet.</p>
+                        <p class="subtitle">System is actively monitoring all zones.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Socket.IO integration -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const container = document.getElementById('alerts-container');
+        const emptyState = document.getElementById('empty-state');
+        const totalEventsEl = document.getElementById('total-events');
+        
+        // Setup initial history
+        socket.on('alert_history', (alerts) => {
+            if (alerts.length > 0) {
+                emptyState.style.display = 'none';
+                container.innerHTML = '';
+                alerts.forEach(createAlertElement);
+                updateStats(alerts.length);
+            }
+        });
+        
+        // Handle incoming alerts
+        socket.on('new_alert', (alert) => {
+            emptyState.style.display = 'none';
+            // Prepend new alert
+            const alertHtml = buildAlertHtml(alert);
+            const div = document.createElement('div');
+            div.className = 'alert-card new-alert';
+            div.innerHTML = alertHtml;
+            container.insertBefore(div, container.firstChild);
+            
+            // Increment stats
+            const currentTotal = parseInt(totalEventsEl.innerText);
+            updateStats(currentTotal + 1);
+            
+            // Ring a sound (optional)
+            try {
+                const audio = new Audio('data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/9k=');
+                // audio.play(); // Usually blocked without interaction
+            } catch(e) {}
+            
+            // Remove animation class after playing
+            setTimeout(() => {
+                div.classList.remove('new-alert');
+            }, 3000);
+        });
+        
+        function updateStats(count) {
+            totalEventsEl.innerText = count;
+        }
+
+        function createAlertElement(alert) {
+            const div = document.createElement('div');
+            div.className = 'alert-card';
+            div.innerHTML = buildAlertHtml(alert);
+            container.appendChild(div);
+        }
+        
+        function buildAlertHtml(alert) {
+            const date = new Date(alert.timestamp);
+            const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second:'2-digit' });
+            const dateString = date.toLocaleDateString();
+            
+            const confPercent = Math.round(alert.confidence * 100);
+            
+            let imgHtml = '';
+            if (alert.image) {
+                imgHtml = `<div class="alert-image"><img src="${alert.image}" alt="Intruder Snapshot"></div>`;
+            } else {
+                imgHtml = `<div class="alert-image placeholder-image">
+                            <span>No Image</span>
+                           </div>`;
+            }
+            
+            return `
+                ${imgHtml}
+                <div class="alert-details">
+                    <div class="alert-header">
+                        <h3>UNKNOWN FACE</h3>
+                        <span class="severity-badge">CRITICAL</span>
+                    </div>
+                    
+                    <div class="alert-meta">
+                        <div class="meta-item">
+                            <span class="meta-icon">📍</span> 
+                            <span>${alert.device_id || 'Unknown Device'}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">⏱️</span> 
+                            <span>${dateString} ${timeString}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="confidence-bar">
+                        <div class="conf-label">Match Confidence: ${confPercent}%</div>
+                        <div class="conf-track">
+                            <div class="conf-fill" style="width: ${confPercent}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
