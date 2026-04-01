@@ -23,6 +23,9 @@ def main():
             # Process frame for faces
             locations, names, confidences = recognizer.detect_and_recognize(frame)
             
+            if len(locations) > 0:
+                log.info(f"Successfully detected {len(locations)} face(s): {names}")
+            
             # Draw results and handle alerts
             for (top, right, bottom, left), name, confidence in zip(locations, names, confidences):
                 
