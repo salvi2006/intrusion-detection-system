@@ -60,10 +60,10 @@ def main():
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
                     
-            # Explicitly force the system to run at a maximum of 10 FPS (1 sec / 10 = 0.1s)
+            # Explicitly force the system to run at exactly 1 Frame Per Second
             elapsed = time.time() - loop_start
-            if elapsed < 0.1:
-                time.sleep(0.1 - elapsed)
+            if elapsed < 1.0:
+                time.sleep(1.0 - elapsed)
                 
     except KeyboardInterrupt:
         log.info("Interrupted by user.")
