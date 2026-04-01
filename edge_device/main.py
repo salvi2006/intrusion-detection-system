@@ -14,10 +14,14 @@ def main():
     
     log.info("System ready. Press 'q' in the video window to quit.")
     
+    import time
     try:
         while True:
+            loop_start = time.time()
+            
             ret, frame = stream.read_frame()
             if not ret or frame is None:
+                time.sleep(0.1)  # Prevent CPU burn on dead frames
                 continue
                 
             # Process frame for faces
@@ -55,6 +59,11 @@ def main():
                 cv2.imshow('Edge Device - Simulation Mode', frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
+                    
+            # Explicitly force the system to run at a maximum of 10 FPS (1 sec / 10 = 0.1s)
+            elapsed = time.time() - loop_start
+            if elapsed < 0.1:
+                time.sleep(0.1 - elapsed)
                 
     except KeyboardInterrupt:
         log.info("Interrupted by user.")
