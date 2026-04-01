@@ -16,8 +16,11 @@ class CameraStream:
 
     def read_frame(self):
         try:
+            # Force the phone to take a NEW picture by adding a constantly changing timestamp, bypassing HTTP caches
+            current_url = f"{self.url}?t={int(time.time() * 1000)}"
+            
             # Physically request exactly the current frame from the camera sensor in real-time
-            resp = requests.get(self.url, timeout=2)
+            resp = requests.get(current_url, timeout=2)
             if resp.status_code == 200:
                 img_array = np.array(bytearray(resp.content), dtype=np.uint8)
                 frame = cv2.imdecode(img_array, -1)
