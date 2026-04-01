@@ -41,8 +41,14 @@ To use your smartphone as the IP camera:
 
 4. **Install Edge Device dependencies** (on the Raspberry Pi):
    ```bash
-   sudo apt install cmake
+   sudo apt install cmake python3-full
    cd edge_device
+   
+   # Create and activate a Virtual Environment
+   python3 -m venv venv
+   source venv/bin/activate
+   
+   # Install Python requirements
    pip install -r requirements.txt
    ```
 5. **Add Authorized People**: 
