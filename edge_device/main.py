@@ -49,12 +49,12 @@ def main():
                 font = cv2.FONT_HERSHEY_DUPLEX
                 cv2.putText(frame, f"{label} ({confidence:.2f})", (left + 6, bottom - 6), font, 0.6, (255, 255, 255), 1)
                 
-            # Show the display
-            cv2.imshow('Edge Device - Simulation Mode', frame)
-            
-            # Quit hotkey
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+            # Display the video frame if a monitor is attached (skip in SSH)
+            import os
+            if os.environ.get('DISPLAY'):
+                cv2.imshow('Edge Device - Simulation Mode', frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
                 
     except KeyboardInterrupt:
         log.info("Interrupted by user.")
