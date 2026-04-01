@@ -38,8 +38,9 @@ class FaceRecognizer:
         log.info(f"Loaded {len(self.known_face_names)} known faces total.")
 
     def detect_and_recognize(self, frame):
-        # Resize frame of video to 1/4 size for faster face recognition processing
-        small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+        # Process at the native frame resolution (1.0x) because the user manually shrunk it in their phone app!
+        small_frame = cv2.resize(frame, (0, 0), fx=1.0, fy=1.0)
+        
         # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
         rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
 
@@ -47,6 +48,8 @@ class FaceRecognizer:
         face_locations = face_recognition.face_locations(rgb_small_frame)
         face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
 
+        # Mathematical multiplier to accurately scale the drawing coordinates back up (1 / 1.0 = 1)
+        scale = 1
         face_names = []
         confidences = []
 
